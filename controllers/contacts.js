@@ -1,4 +1,5 @@
 const { Contact, joiSchema, favJoiSchema } = require("../models/contact");
+const { ctrlWrapper, RequestError } = require("../middlewares");
 
 const getAll = async (req, res, next) => {
   try {
@@ -20,9 +21,7 @@ const getById = async (req, res, next) => {
     const { contactId } = req.params;
     const result = await Contact.findById(contactId);
     if (!result) {
-      const error = new Error(`Contact with id=${contactId} not found`);
-      error.status = 404;
-      throw error;
+      throw RequestError(404, "Contact not found");
     }
     res.json({
       status: "success",
@@ -40,9 +39,7 @@ const add = async (req, res, next) => {
   try {
     const { error } = joiSchema.validate(req.body);
     if (error) {
-      const err = new Error(error.message);
-      err.status = 400;
-      throw err;
+      throw RequestError(400, "Bad Request");
     }
     const result = await Contact.create(req.body);
     res.status(201).json({
@@ -61,9 +58,7 @@ const update = async (req, res, next) => {
   try {
     const { error } = joiSchema.validate(req.body);
     if (error) {
-      const err = new Error(error.message);
-      err.status = 400;
-      throw err;
+      throw RequestError(400, "Bad Request");
     }
     const { contactId } = req.params;
     const result = await Contact.findByIdAndUpdate(contactId, req.body, {
@@ -86,9 +81,7 @@ const remove = async (req, res, next) => {
     const { contactId } = req.params;
     const result = await Contact.findByIdAndRemove(contactId);
     if (!result) {
-      const error = new Error(`Contact with id=${contactId} not found`);
-      error.status = 404;
-      throw error;
+      throw RequestError(404, "Contact not found");
     }
     res.json({
       status: "success",
@@ -106,9 +99,7 @@ const updateStatusContact = async (req, res, next) => {
   try {
     const { error } = favJoiSchema.validate(req.body);
     if (error) {
-      const err = new Error(error.message);
-      err.status = 400;
-      throw err;
+      throw RequestError(400, "Bad Request");
     }
     const { contactId } = req.params;
     const { favorite } = req.body;
@@ -130,10 +121,10 @@ const updateStatusContact = async (req, res, next) => {
 };
 
 module.exports = {
-  getAll,
-  getById,
-  add,
-  update,
-  remove,
-  updateStatusContact,
+  getAll: ctrlWrapper(getAll),
+  getById: ctrlWrapper(getById),
+  add: ctrlWrapper(add),
+  update: ctrlWrapper(update),
+  remove: ctrlWrapper(remove),
+  updateStatusContact: ctrlWrapper(updateStatusContact),
 };
